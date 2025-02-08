@@ -11,17 +11,39 @@ window.addEventListener('onWidgetLoad', function (obj) {
 
 window.addEventListener('onEventReceived', function (obj) {
     if (!obj.detail.event) return;
-
-    const listener = obj.detail.listener.split("-")[0];
+    const listener = obj.detail.listener;
     const event = obj.detail.event;
-
+  	const userName = obj.detail.event.data?.nick || "Unknown";
+	const tags = obj.detail.event.data?.tags || {};
+	const isModerator = tags.mod === "1";
+	const isAdmin = userName === "madokaka";
+    
+    console.log("Listener: " + obj.detail.listener)
+    
+    if (obj.detail.listener === "message") {
+        const message = obj.detail.event.data.text.toLowerCase();
+		console.log("Entre en el message - User: ", userName)
+        if ((message === "!subir" || message === "!bajar")  && !(isModerator || isAdmin)) {
+          console.log("Entre en el condicional")
+            return;
+        }
+        if (message === "!subir") {
+          console.log("Entre en el subir")
+            dollarCounter++;  
+            updateDollarCounterDisplay(); 
+        } else if (message === "!bajar") {
+            dollarCounter--; 
+            updateDollarCounterDisplay(); 
+        }
+    }
+  
     let dollars = 0;
 
-    if (listener === 'subscriber') {
+    if (listener === 'subscriber-latest') {
         dollars = processSubscriber(event);
-    } else if (listener === 'cheer') {
+    } else if (listener === 'cheer-latest') {
         dollars = Math.floor(event.amount / 100);
-    } else if (listener === 'tip') {
+    } else if (listener === 'tip-latest') {
         dollars = event.amount;
     }
 
@@ -46,17 +68,18 @@ window.addEventListener('onEventReceived', function (obj) {
 
 function processSubscriber(event) {
     let dollars = 0;
+    console.log(event)
 
-    if (event.tier === "2000") {
+    if (event.tier === "1000"){
+    dollars = 1; 
+    } else if (event.tier === "2000") {
         dollars = 2; 
     } else if (event.tier === "3000") {
         dollars = 5; 
-    } else {
-        dollars = 1; 
     }
-
+    
     if (event.bulkGifted) {
-        return;
+        return 0;
     } 
 
     return dollars;
@@ -66,7 +89,7 @@ function displayGoalMessage() {
     const display = document.getElementById('sub-counter-display');
     const backgroundFill = document.querySelector('.background-fill');
 	 
-    display.innerText = `Meta alcanzada! x${comboCounter}`;
+    display.innerText = "Meta alcanzada! x" + comboCounter;
     backgroundFill.style.width = '100%';
    
   	
@@ -83,7 +106,7 @@ function updateDollarCounterDisplay() {
     const display = document.getElementById('sub-counter-display');
 
     if (comboCounter === 0) {
-        display.innerText = `Meta: $${Math.floor(dollarCounter)} / ${goal}`;
+        display.innerText =` Meta: $${Math.floor(dollarCounter)} / ${goal}`;
     }
  
   if (fillPercentage >= 75 || comboCounter > 0) {
